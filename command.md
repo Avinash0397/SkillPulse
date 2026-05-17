@@ -1,0 +1,188 @@
+# Step-by-Step Command Guide
+
+This guide provides all the commands used to transform the project, migrate to Amazon ECR, and deploy to Kubernetes.
+
+## Phase 1: Setup and Discovery
+```bash
+# 1. Clone the repository
+git clone https://github.com/Kanhaiya-Tiwari/github-actions-kubernetes-masterclass.git
+cd github-actions-kubernetes-masterclass
+
+# 2. Identify AWS Account Details
+aws sts get-caller-identity
+aws configure get region
+```
+
+## Phase 2: ECR Repository Creation
+```bash
+# 3. Create ECR Repositories (Replace Account ID and Region if different)
+aws ecr create-repository --repository-name skillpulse-backend --region eu-west-1
+aws ecr create-repository --repository-name skillpulse-frontend --region eu-west-1
+aws ecr create-repository --repository-name skillpulse-db --region eu-west-1
+```
+
+## Phase 3: Build and Push to Amazon ECR
+```bash
+# 4. Authenticate Docker to ECR
+aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 815210276744.dkr.ecr.eu-west-1.amazonaws.com
+
+# 5. Build and Tag Backend
+docker build -t 815210276744.dkr.ecr.eu-west-1.amazonaws.com/skillpulse-backend:latest ./backend
+
+# 6. Build and Tag Frontend
+docker build -t 815210276744.dkr.ecr.eu-west-1.amazonaws.com/skillpulse-frontend:latest ./frontend
+
+# 7. Build and Tag Database
+docker build -t 815210276744.dkr.ecr.eu-west-1.amazonaws.com/skillpulse-db:latest ./mysql
+
+# 8. Push Images to ECR
+docker push 815210276744.dkr.ecr.eu-west-1.amazonaws.com/skillpulse-backend:latest
+docker push 815210276744.dkr.ecr.eu-west-1.amazonaws.com/skillpulse-frontend:latest
+docker push 815210276744.dkr.ecr.eu-west-1.amazonaws.com/skillpulse-db:latest
+```
+
+## Phase 4: Kubernetes Deployment
+```bash
+# 9. Apply core resources (Namespace)
+kubectl apply -f k8s/core/
+
+# 10. Apply Database resources (Secrets, Service, StatefulSet)
+kubectl apply -f k8s/mysql/
+
+# 11. Apply Application resources (ConfigMap, Deployments, Services)
+kubectl apply -f k8s/skillpulse/
+
+# 12. Verify status
+kubectl get all -n skillpulse
+
+## Phase 5: Infrastructure Provisioning (Terraform)
+
+### Step 5a: Backend Setup (One-time)
+```bash
+# 13. Create S3 Bucket and DynamoDB Table for remote state
+aws s3 mb s3://skillpulse-terraform-state-815210276744 --region eu-west-1
+aws dynamodb create-table \
+    --table-name skillpulse-terraform-lock \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --region eu-west-1
+```
+
+### Step 5b: Deployment
+```bash
+# 14. Navigate to terraform directory
+cd terraform
+
+# 15. Initialize Terraform (Migrate state to S3 if prompted)
+terraform init
+
+# 16. Plan and Apply
+terraform plan
+terraform apply --auto-approve
+
+# 17. Verify Monitoring Stack
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+
+# 18. Access Grafana (get password)
+kubectl get secret --namespace monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+## Phase 6: GitOps Orchestration (App-of-Apps)
+```bash
+# 19. Bootstrap the Root Application
+# This will automatically trigger the deployment of Core, MySQL, and SkillPulse apps
+kubectl apply -f k8s/bootstrap/root.yaml
+
+# 20. Access ArgoCD UI (get password)
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+## Phase 7: DevSecOps & Security Tools (Local Run)
+```bash
+# 21. Run Gitleaks locally to scan for secrets
+gitleaks detect --source . -v
+
+# 22. Run Checkov locally for Infrastructure scan
+checkov -d terraform/ --framework terraform
+
+# 23. Run Trivy locally to scan Docker image
+trivy image 815210276744.dkr.ecr.eu-west-1.amazonaws.com/skillpulse-backend:latest
+```
+
+## Phase 8: Operational Tasks
+```bash
+# 24. Run Production Backup manually
+chmod +x ./scripts/backup.sh
+./scripts/backup.sh
+
+# 25. Check Environment Health via Prometheus
+# (Port-forward to access Prometheus UI locally)
+kubectl port-forward svc/prometheus-stack-kube-prom-prometheus 9090 -n monitoring
+```
+```
+```
+
+## Shortcuts (Using Makefile)
+If you have `make` installed and configured the `Makefile` correctly:
+```bash
+# Build all images
+make build
+
+# Deploy all manifests
+make apply
+
+# Check logs for all components
+make logs
+```
+
+## Phase 9: Full Stack One-Command Deployment
+
+### 26. Complete Automation Script
+Use this script to deploy everything (Infra + Monitoring + App) in one go:
+```bash
+# Set execute permissions
+chmod +x deploy.sh
+
+# Run for Dev environment
+./deploy.sh dev
+
+# Run for Prod environment
+./deploy.sh prod
+```
+
+### 27. Manual Step-by-Step with New Fixes
+If you prefer running commands manually, follow this sequence:
+```bash
+# 1. Initialize with latest provider updates
+terraform init -upgrade
+
+# 2. Apply infrastructure (Automatically runs post-deploy script)
+terraform apply -auto-approve
+
+# 3. Verify Pods across all namespaces
+kubectl get pods -A
+```
+
+### 28. Accessing Unified Monitoring
+Once the deployment is complete, Prometheus and Loki are pre-attached:
+1. Get Grafana Password: `kubectl get secret --namespace monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo`
+2. Port-forward Grafana: `kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring`
+3. Access at `http://localhost:3000`
+4. Go to **Explore** and select **Loki** to see logs, or use the pre-built Prometheus dashboards.
+
+## Phase 10: Production Ingress & Single URL Access
+
+### 29. Single LoadBalancer Entry Point
+Check your unified cluster entry point:
+```bash
+kubectl get svc ingress-nginx-controller -n kube-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+```
+
+### 30. Service Access via Sub-paths
+Once you have the DNS from the command above, access services as follows:
+- **Main Frontend**: `http://<DNS>/`
+- **Grafana Monitoring**: `http://<DNS>/grafana`
+- **ArgoCD GitOps**: `http://<DNS>/argocd`
+
+*Note: All services are now ClusterIP for maximum security, only accessible via the Ingress LoadBalancer.*
