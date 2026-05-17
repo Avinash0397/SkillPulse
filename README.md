@@ -237,6 +237,4 @@ aws eks update-kubeconfig --region eu-west-1 --name skillpulse-dev
 
 ---
 
-## 🏆 Credits & Mentorship
 
-Built with ❤️ for the [TrainWithShubham](https://www.youtube.com/@TrainWithShubham) community. Elevating developers to true platform engineers.
