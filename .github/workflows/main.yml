@@ -132,9 +132,9 @@ jobs:
 
       - name: Push Image to DockerHub
         run: |
-           docker push avinash974/frontend:latest
-           docker push avinash974/backend:latest
-           docker push avinash974/database:latest
+           docker push avinash974/avinash-frontend:latest
+           docker push avinash974/avinash-backend:latest
+           docker push avinash974/avinash-database:latest
 
 
   smoke-test:
