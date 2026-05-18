@@ -42,7 +42,7 @@ jobs:
           $(go env GOPATH)/bin/govulncheck ./backend/... || true
 
   iac-audit:
-    name: 🏗️ Infrastructure Compliance (Checkov)
+    name:  Infrastructure Compliance (Checkov)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -61,7 +61,7 @@ jobs:
           checkov -d . --framework terraform,kubernetes --soft-fail
 
   lint-audit:
-    name: 🔍 Code Lint & Secrets Scan (Gitleaks/Hadolint)
+    name:  Code Lint & Secrets Scan (Gitleaks/Hadolint)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -84,7 +84,7 @@ jobs:
   # STAGE 2: Secure Artifact Build & Automated Smoke Tests
   # -------------------------------------------------------------
   build-backend:
-    name: 📦 Build Backend Service
+    name:  Build Backend Service
     needs: [security-audit, iac-audit, lint-audit]
     runs-on: ubuntu-latest
     steps:
@@ -151,8 +151,8 @@ jobs:
 
 
   smoke-test:
-    name: 🧪 Automated Application Smoke Test
-    needs: [security-audit, iac-audit, lint-audit]
+    name:  Automated Application Smoke Test
+    needs: build-backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -173,9 +173,9 @@ jobs:
   # STAGE 3: GitOps CD Deployment & Telemetry Verification (Dev)
   # -------------------------------------------------------------
   deploy-dev:
-    name: 🚀 Deploy Dev Manifests (GitOps)
+    name:  Deploy Dev Manifests (GitOps)
     if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
-    needs: [build-backend, build-frontend, smoke-test]
+    needs: [build-backend,smoke-test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -198,7 +198,7 @@ jobs:
           git push
 
   verify-dev-telemetry:
-    name: 🩺 Verify Dev Telemetry (Prometheus/Loki)
+    name:  Verify Dev Telemetry (Prometheus/Loki)
     needs: deploy-dev
     runs-on: ubuntu-latest
     steps:
@@ -237,7 +237,7 @@ jobs:
   # STAGE 4: GitOps CD Deployment & DAST Security Gates (Prod)
   # -------------------------------------------------------------
   deploy-prod:
-    name: 🚀 Deploy Prod Manifests (GitOps)
+    name:  Deploy Prod Manifests (GitOps)
     if: (github.ref == 'refs/heads/main') && success()
     needs: [verify-dev-telemetry, dast-scan-dev]
     runs-on: ubuntu-latest
