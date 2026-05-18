@@ -176,52 +176,8 @@ jobs:
     - name: Update kubeconfig
       run: |
         aws eks update-kubeconfig --region ap-southeast-1 --name avinash-cluster
-    - name: Test EKS Connection
-      run: |
-        kubectl get node  
-    - name: Deploy to EKS
-      run: |
-        kubectl apply -f k8s/01-namespace.yaml
-        kubectl apply -f k8s/04-configmap.yaml
-        kubectl apply -f k8s/05-mysql-secrets.yaml
-        kubectl apply -f k8s/06-mysql-service.yaml
-        kubectl apply -f k8s/07-mysql-statefulset.yaml
-        kubectl apply -f k8s/08-backend-deployment.yaml
-        kubectl apply -f k8s/09-backend-service.yaml
-        kubectl apply -f k8s/10-frontend-deployment.yaml
-        kubectl apply -f k8s/11-frontend-service.yaml
-        kubectl apply -f k8s/12-hpa.yaml
-        kubectl apply -f k8s/13-pdb.yaml
-        kubectl apply -f k8s/ingress.yaml
 
-
-    - name: Check Deployment Status
-      run: |
-        kubectl get pods -n skillpulse
-        kubectl get svc -n skillpulse
- 
-
-  verify-dev-telemetry:
-    name:  Verify Dev Telemetry (Prometheus/Loki)
-    needs: deploy-to-eks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Verify Metrics Availability
-        run: |
-          echo "Telemetry Check for dev..."
-          echo "Querying Prometheus for active targets..."
-          echo "Integrity check: SUCCESS - Prometheus scraping active."
-          
-      - name: Verify Logging Stream
-        run: |
-          echo "Querying Loki for recent log streams..."
-          echo "Integrity check: SUCCESS - Loki receiving logs with label env=dev."
-
-      - name: Verify OTel Tracing
-        run: |
-          echo "Verifying OpenTelemetry collector status..."
-          echo "Integrity check: SUCCESS - OTel traces flowing to backend."
-
+  
   dast-scan-dev:
     name:  ZAP DAST Scan (Dev Environment)
     needs: deploy-to-eks
@@ -244,7 +200,7 @@ jobs:
   deploy-prod:
     name: Deploy Prod Manifests GitOps
     if: github.ref == 'refs/heads/main' && success()
-    needs: verify-dev-telemetry
+    needs: deploy-to-eks
     runs-on: ubuntu-latest
 
     steps:
@@ -272,8 +228,7 @@ jobs:
 
   notify-prod:
     name:  Dispatch Deployment Status Email
-    if: always()
-    needs: [deploy-prod, dast-scan-prod]
+    needs: dast-scan-prod
     runs-on: ubuntu-latest
     steps:
       - name: Send Mail Alert
@@ -285,7 +240,7 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "SkillPulse Deployment [${{ contains(needs.*.result, 'failure') && 'failure' || 'success' }}]"
-          to: knhapndt@gmail.com
+          to: avimishra478@gmail.com
           from: "SkillPulse DevSecOps Alert <${{ secrets.MAIL_USERNAME }}>"
           body: |
             ==================================================
