@@ -5,7 +5,7 @@ on:
     branches:
       - main
 permissions:
-  contents: write 
+  contents: read
 jobs:
   # -------------------------------------------------------------
   # STAGE 1: Code & Security Compliance Scan (Static Auditing)
@@ -166,7 +166,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Install kubectl
       uses: azure/setup-kubectl@v4
@@ -253,8 +253,8 @@ jobs:
 
       - name: Update Kubernetes Image Tags (Prod)
         run: |
-          sed -i "s|image: .*skillpulse-backend:.*|image: ${{ env.ECR_REGISTRY }}/skillpulse-backend:${{ github.sha }}|" k8s/skillpulse/08-backend-deployment.yaml
-          sed -i "s|image: .*skillpulse-frontend:.*|image: ${{ env.ECR_REGISTRY }}/skillpulse-frontend:${{ github.sha }}|" k8s/skillpulse/10-frontend-deployment.yaml
+          sed -i "s|image: .*avinash-backend:.*|image: avinash974/avinash-backend |" k8s/skillpulse/08-backend-deployment.yaml
+          sed -i "s|image: .*avinash-frontend:.*|image: avinash974/avinash-frontend |" k8s/skillpulse/10-frontend-deployment.yaml
 
       - name: Commit and Push Manifests
         run: |
