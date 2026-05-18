@@ -161,7 +161,7 @@ jobs:
   # -------------------------------------------------------------
 
   deploy-to-eks:
-   runs-on: ubuntu-latest
+   runs-on: self-hosted
    needs: smoke-test
    steps:
     - name: Checkout Code
