@@ -1,4 +1,4 @@
-name: Production DevSecOps Multi-Stage Pipeline-1
+name: Production DevSecOps Multi-Stage Pipeline
 
 on:
   push:
