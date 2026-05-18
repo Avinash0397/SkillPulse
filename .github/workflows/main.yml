@@ -2,16 +2,10 @@ name: Production DevSecOps Multi-Stage Pipeline-1
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-env:
-  AWS_REGION: "ap-south-1"
-
+    branches:
+      - main
 permissions:
-  contents: write
-
+  contents: write 
 jobs:
   # -------------------------------------------------------------
   # STAGE 1: Code & Security Compliance Scan (Static Auditing)
@@ -161,7 +155,7 @@ jobs:
   # -------------------------------------------------------------
 
   deploy-to-eks:
-   runs-on: self-hosted
+   runs-on: ubuntu-latest
    needs: smoke-test
    steps:
     - name: Checkout Code
