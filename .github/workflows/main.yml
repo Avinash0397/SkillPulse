@@ -132,9 +132,9 @@ jobs:
 
       - name: Push Image to DockerHub
         run: |
-           docker push avinash974/frontend:latest:${{ github.sha }}
-           docker push avinash974/backend:latest:${{ github.sha }}
-           docker push avinash974/database:latest:${{ github.sha }}
+           docker push avinash974/frontend:latest
+           docker push avinash974/backend:latest
+           docker push avinash974/database:latest
 
 
   smoke-test:
