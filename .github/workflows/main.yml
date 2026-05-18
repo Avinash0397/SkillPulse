@@ -214,8 +214,8 @@ jobs:
           echo "Integrity check: SUCCESS - OTel traces flowing to backend."
 
   dast-scan-dev:
-    name: 🌐 ZAP DAST Scan (Dev Environment)
-    needs: deploy-dev
+    name:  ZAP DAST Scan (Dev Environment)
+    needs: deploy-to-eks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -257,7 +257,7 @@ jobs:
           git push
 
   dast-scan-prod:
-    name: 🌐 ZAP DAST Scan (Prod Environment)
+    name:  ZAP DAST Scan (Prod Environment)
     needs: deploy-prod
     runs-on: ubuntu-latest
     steps:
@@ -272,7 +272,7 @@ jobs:
           fail_action: false
 
   notify-prod:
-    name: 📧 Dispatch Deployment Status Email
+    name:  Dispatch Deployment Status Email
     if: always()
     needs: [deploy-prod, dast-scan-prod]
     runs-on: ubuntu-latest
