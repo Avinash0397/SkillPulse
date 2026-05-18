@@ -59,7 +59,19 @@ jobs:
       - name: Hadolint (Dockerfile Lint)
         uses: hadolint/hadolint-action@v3.1.0
         with:
+          dockerfile: frontend/Dockerfile
+          ignore: DL3008,DL3007
+
+      - name: Hadolint (Dockerfile Lint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
           dockerfile: backend/Dockerfile
+          ignore: DL3008,DL3007
+
+      - name: Hadolint (Dockerfile Lint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: mysql/Dockerfile
           ignore: DL3008,DL3007
 
   # -------------------------------------------------------------
@@ -94,7 +106,7 @@ jobs:
       - name: Trivy Vulnerability frontend Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'avinash974/avinash-frontend:${{ github.sha }}'          
+          image-ref: 'avinash974/avinash-frontend:latest'          
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
@@ -103,7 +115,7 @@ jobs:
       - name: Trivy Vulnerability backend Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'avinash974/avinash-backend:${{ github.sha }}'          
+          image-ref: 'avinash974/avinash-backend:latest'          
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
@@ -112,7 +124,7 @@ jobs:
       - name: Trivy Vulnerability database Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'avinash974/avinash-database:${{ github.sha }}'          
+          image-ref: 'avinash974/avinash-database:latest'          
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
