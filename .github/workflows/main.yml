@@ -1,4 +1,4 @@
-name: Production DevSecOps Multi-Stage Pipeline
+name: Production DevSecOps Multi-Stage Pipeline in AWS
 
 on:
   push:
